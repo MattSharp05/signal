@@ -33,14 +33,16 @@ export class SupabaseRepository implements Repository {
   async listFeed(f: FeedFilters, offset: number, limit: number, user: UserState): Promise<FeedPage> {
     let q = this.db.from('products').select(PRODUCT_COLS, { count: 'estimated' }).eq('status', 'active')
     if (f.q?.trim()) {
-      const s = f.q.trim().replace(/[%,()*]/g, ' ')
-      q = q.or(`name.ilike.*${s}*,domain.ilike.*${s}*,company_name.ilike.*${s}*,tagline.ilike.*${s}*,description.ilike.*${s}*,category.ilike.*${s}*,business_model.ilike.*${s}*,tags.cs.{${s}}`)
+      const s = f.q.trim().replace(/[%,()*"{}\\]/g, ' ').trim()
+      const like = `"*${s}*"`
+      const tag = /^[\w-]+$/.test(s) ? `,tags.cs.{${s}}` : ''
+      q = q.or(`name.ilike.${like},domain.ilike.${like},company_name.ilike.${like},tagline.ilike.${like},description.ilike.${like},category.ilike.${like},business_model.ilike.${like}${tag}`)
     }
     if (f.category) q = q.eq('category', f.category)
     if (f.platform) q = q.contains('platforms', [f.platform])
     if (f.stage) q = q.eq('stage', f.stage)
     if (f.source) q = q.contains('source_ids', [f.source])
-    if (f.quick === 'new') q = q.or(`stage.eq.new_launch,launch_date.gte.${new Date(Date.now() - 14 * 86400_000).toISOString()}`)
+    if (f.quick === 'new') q = q.or(`stage.eq.new_launch,launch_date.gte."${new Date(Date.now() - 14 * 86400_000).toISOString()}"`)
     if (f.quick === 'trending') q = q.gte('relevance_score', 35)
     if (f.quick === 'revenue' || f.hasRevenue) q = q.not('monthly_revenue', 'is', null)
     if (f.revenueMin != null) q = q.gte('monthly_revenue', f.revenueMin)

@@ -172,6 +172,13 @@ export class MemoryStore implements Store {
     return this.data.mentions.find((m) => m.sourceId === sourceId && m.externalId === externalId)?.collectedAt ?? null
   }
 
+  async mentionProductId(sourceId: string, externalId: string) {
+    const m = this.data.mentions.find((x) => x.sourceId === sourceId && x.externalId === externalId)
+    if (!m) return null
+    const p = this.data.products.find((x) => x.id === m.productId)
+    return p?.status === 'merged' && p.mergedInto ? p.mergedInto : m.productId
+  }
+
   async listMentions(productId: string) {
     return this.data.mentions.filter((m) => m.productId === productId)
   }

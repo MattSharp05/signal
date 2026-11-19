@@ -60,6 +60,9 @@ describe('metrics', () => {
     expect(m.find((x) => x.metric === 'mrr')?.value).toBe(12000)
     expect(m.find((x) => x.metric === 'users')?.value).toBe(3400)
     expect(extractMetricsFromText('We plan to grow revenue a lot', 'founder_reported')).toHaveLength(0)
+    // prices are not revenue
+    expect(extractMetricsFromText('Pro plan: $199 per month, or $29/mo for starters', 'founder_reported')).toHaveLength(0)
+    expect(extractMetricsFromText("We're now making $4k a month", 'founder_reported')[0]).toMatchObject({ metric: 'revenue_30d', value: 4000 })
   })
   it('formats', () => {
     expect(formatMetricValue('mrr', 3368.44)).toBe('$3.4K')
@@ -218,5 +221,31 @@ describe('AI grounding', () => {
       { metric: 'arr', value: 96000, period_label: null, quote: '$96k ARR' },
     ], 'founder_reported')
     expect(out.map((o) => o.metric)).toEqual(['customers'])
+  })
+})
+
+describe('re-ingestion of known documents', () => {
+  it('does not create orphan products for text-only posts seen before', async () => {
+    const s = store()
+    const deps = { store: s, now: fixedNow }
+    const post: RawMention = { sourceId: 'hn_show', externalId: '42', url: 'https://news.ycombinator.com/item?id=42', identity: { name: 'Ask about X', aliases: [{ kind: 'hn_item', value: '42' }] }, metrics: [{ metric: 'upvotes', value: 5, unit: 'count', evidence: 'platform_metric', confidence: 'high', asOf: '2026-11-19' }] }
+    await ingestMention(deps, post)
+    const again = { ...post, metrics: [{ ...post.metrics[0], value: 9, asOf: '2026-11-20' }] }
+    const r = await ingestMention(deps, again)
+    expect(r.created).toBe(false)
+    expect(s.data.products).toHaveLength(1)
+    expect(s.data.observations).toHaveLength(2)
+  })
+})
+
+describe('http safety', () => {
+  it('blocks redirects to private addresses', async () => {
+    const { Http } = await import('./http.ts')
+    const fake = (async (u: string) =>
+      u.startsWith('https://public.example')
+        ? new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/latest/meta-data' } })
+        : new Response('secret')) as unknown as typeof fetch
+    const h = new Http({ fetch: fake, respectRobots: false, perHostDelayMs: 0 })
+    await expect(h.text('https://public.example/x')).rejects.toThrow(/Private or local/)
   })
 })

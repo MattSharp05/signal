@@ -104,5 +104,6 @@ export function defaultSourceRecords(env: (k: string) => string | undefined = ()
 }
 
 export function shortSourceName(id: string, sources?: SourceRecord[]): string {
-  return getConnector(id)?.shortName ?? sources?.find((s) => s.id === id)?.name ?? id
+  if (id === 'manual') return 'Manual'
+  return getConnector(id)?.shortName ?? CATALOG_ONLY.find((s) => s.id === id)?.name ?? sources?.find((s) => s.id === id)?.name ?? (id.startsWith('rss_') ? 'RSS feed' : id)
 }

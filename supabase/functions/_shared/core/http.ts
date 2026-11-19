@@ -171,9 +171,23 @@ export class Http {
     const headers = new Headers(init.headers)
     if (!this.opts.browser && !headers.has('user-agent')) headers.set('user-agent', USER_AGENT)
     try {
-      this.requests++
-      return await this.f(url, { ...init, headers, signal: ctrl.signal, redirect: 'follow' })
+      if (this.opts.browser) {
+        this.requests++
+        return await this.f(url, { ...init, headers, signal: ctrl.signal, redirect: 'follow' })
+      }
+      // Server: follow redirects manually so every hop passes the public-URL (SSRF) check.
+      let current = url
+      for (let hop = 0; hop < 6; hop++) {
+        this.requests++
+        const res = await this.f(current, { ...init, headers, signal: ctrl.signal, redirect: 'manual' })
+        const loc = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null
+        if (!loc) return res
+        current = new URL(loc, current).toString()
+        assertPublicUrl(current)
+      }
+      throw new FetchError('Too many redirects', null, url, 'network')
     } catch (e) {
+      if (e instanceof FetchError) throw e
       if ((e as Error).name === 'AbortError') throw new FetchError(`Timeout after ${this.opts.timeoutMs}ms`, null, url, 'timeout')
       throw new FetchError(`Network error: ${(e as Error).message}`, null, url, 'network')
     } finally {

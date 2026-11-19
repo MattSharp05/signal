@@ -126,6 +126,14 @@ export class SupabaseStore implements Store {
     return r?.collected_at ?? null
   }
 
+  async mentionProductId(sourceId: string, externalId: string) {
+    const r = await this.q<{ product_id: string; products: { status: string; merged_into: string | null } | null } | null>(
+      this.db.from('source_mentions').select('product_id, products(status, merged_into)').eq('source_id', sourceId).eq('external_id', externalId).maybeSingle(),
+    )
+    if (!r) return null
+    return r.products?.status === 'merged' && r.products.merged_into ? r.products.merged_into : r.product_id
+  }
+
   async listMentions(productId: string) {
     const rows = await this.q<Record<string, unknown>[]>(this.db.from('source_mentions').select('*').eq('product_id', productId))
     return rows.map((r) => fromRow<SourceMention>(r))

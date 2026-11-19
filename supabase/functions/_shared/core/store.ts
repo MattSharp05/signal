@@ -44,6 +44,8 @@ export interface Store {
   upsertMention(m: Omit<SourceMention, 'id'>): Promise<{ mention: SourceMention; isNew: boolean; changed: boolean }>
   listMentions(productId: string): Promise<SourceMention[]>
   mentionCollectedAt(sourceId: string, externalId: string): Promise<string | null>
+  /** product a source document is already attached to (stable across runs, even if identity data changed) */
+  mentionProductId(sourceId: string, externalId: string): Promise<string | null>
   insertObservations(obs: Omit<MetricObservation, 'id'>[]): Promise<MetricObservation[]>
   listObservations(productId: string): Promise<MetricObservation[]>
   insertEvents(events: Omit<ProductEvent, 'id'>[]): Promise<ProductEvent[]>

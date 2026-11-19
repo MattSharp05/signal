@@ -117,8 +117,10 @@ export async function ingestMention(deps: PipelineDeps, raw: RawMention, opts: {
   const t = now()
   let productId: string
   let created = false
-  if (opts.forceProductId) {
-    productId = opts.forceProductId
+  // A source document we have seen before stays attached to its product (no re-resolution → no orphan duplicates).
+  const known = opts.forceProductId ? null : await store.mentionProductId(raw.sourceId, raw.externalId)
+  if (opts.forceProductId || known) {
+    productId = (opts.forceProductId ?? known)!
     // attach any new strong aliases (e.g. a newly learned domain) to the target product
     const aliases = mentionAliases(raw)
     const owned = await store.findProductsByAliases(aliases)

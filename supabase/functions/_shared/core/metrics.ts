@@ -113,7 +113,9 @@ const TEXT_RULES: TextRule[] = [
   { metric: 'mrr', unit: 'USD', re: new RegExp(String.raw`\b(?:MRR|monthly recurring revenue)(?:\s+(?:of|is|at|reached|hit))?\s*:?\s*\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmM])?`, 'i'), requiresDollar: true },
   { metric: 'arr', unit: 'USD', re: new RegExp(String.raw`\b(?:ARR)(?:\s+(?:of|is|at|reached|hit))?\s*:?\s*\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmMbB])?`, 'i'), requiresDollar: true },
   { metric: 'revenue_run_rate', unit: 'USD', re: new RegExp(String.raw`\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmMbB])?\+?\s*(?:annual(?:ized)? run[- ]rate|run[- ]rate)`, 'i'), requiresDollar: true },
-  { metric: 'revenue_30d', unit: 'USD', re: new RegExp(String.raw`\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmM])?\+?\s*(?:in\s+)?(?:revenue\s+)?(?:a|per|\/)\s?month\b`, 'i'), requiresDollar: true },
+  // "$199 per month" is usually a PRICE, not revenue: require explicit earnings context.
+  { metric: 'revenue_30d', unit: 'USD', re: new RegExp(String.raw`\b(?:making|earning|earns|generat(?:ing|es)|doing|revenue(?: of| is| at|:)?|sales(?: of)?)\s+(?:about\s+|around\s+|over\s+)?\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmM])?\+?\s*(?:\/|a|per)\s?(?:month|mo)\b`, 'i'), requiresDollar: true },
+  { metric: 'revenue_30d', unit: 'USD', re: new RegExp(String.raw`\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmM])?\+?\s*(?:in\s+)?(?:monthly\s+)?(?:revenue|sales)\s+(?:a|per|\/|each)\s?month\b`, 'i'), requiresDollar: true },
   { metric: 'total_revenue', unit: 'USD', re: new RegExp(String.raw`\$\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?([kKmMbB])?\+?\s*(?:in\s+)?(?:total|lifetime|all[- ]time)\s+(?:revenue|sales)`, 'i'), requiresDollar: true },
   { metric: 'users', unit: 'count', re: new RegExp(String.raw`${NUM}\s+(?:active\s+|monthly\s+|happy\s+|registered\s+)?users\b`, 'i') },
   { metric: 'customers', unit: 'count', re: new RegExp(String.raw`${NUM}\s+(?:paying\s+)?(?:customers|subscribers)\b`, 'i') },
