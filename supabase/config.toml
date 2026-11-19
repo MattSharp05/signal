@@ -1,0 +1,32 @@
+project_id = "signal"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 16
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+# Functions authenticate callers themselves (CRON_SECRET or user JWT).
+[functions.ingest]
+verify_jwt = false
+
+[functions.digest]
+verify_jwt = false
+
+[functions.add-product]
+verify_jwt = true
+
+[functions.research]
+verify_jwt = true

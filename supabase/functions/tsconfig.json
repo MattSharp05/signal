@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": [],
+    "typeRoots": [],
+    "paths": {
+      "@supabase/supabase-js": ["../../node_modules/@supabase/supabase-js"],
+      "@anthropic-ai/sdk": ["../../node_modules/@anthropic-ai/sdk"]
+    }
+  },
+  "include": ["deno-shim.d.ts", "*/index.ts", "_shared/*.ts"]
+}
