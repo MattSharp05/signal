@@ -95,6 +95,12 @@ export async function resolveMention(store: Store, m: RawMention, now: Date, dat
       const other = await store.getProduct(h.productId)
       if (!other || other.status !== 'active') continue
       if (other.domain && domain && other.domain !== domain) continue // different businesses sharing a name
+      // conflicting strong identifiers of the same kind (e.g. two different GitHub repos) → different entities
+      const otherAliases = await store.listAliases(other.id)
+      const conflicting = aliases.some(
+        (a) => STRONG_ALIAS_KINDS.has(a.kind) && otherAliases.some((o) => o.kind === a.kind && o.value !== a.value),
+      )
+      if (conflicting) continue
       mergeCandidates.push({ otherId: other.id, reason: `Same normalized name "${nameAlias.value}"; one side has no website domain`, score: 0.6 })
     }
   }

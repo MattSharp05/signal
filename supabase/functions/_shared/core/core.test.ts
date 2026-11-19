@@ -249,3 +249,15 @@ describe('http safety', () => {
     await expect(h.text('https://public.example/x')).rejects.toThrow(/Private or local/)
   })
 })
+
+describe('merge candidates', () => {
+  it('does not flag same-named products with different strong identifiers', async () => {
+    const s = store()
+    const deps = { store: s, now: fixedNow }
+    const repo = (owner: string): RawMention => ({ sourceId: 'github_rising', externalId: owner, url: `https://github.com/${owner}/checker`, identity: { name: 'Checker', websiteUrl: `https://github.com/${owner}/checker`, aliases: [{ kind: 'github_repo', value: `${owner}/checker` }] }, metrics: [] })
+    await ingestMention(deps, repo('a'))
+    await ingestMention(deps, repo('b'))
+    expect(s.data.products).toHaveLength(2)
+    expect(s.data.mergeCandidates).toHaveLength(0)
+  })
+})
